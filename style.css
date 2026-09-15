@@ -818,3 +818,32 @@ button { font-family: inherit; }
 .run-stats .r-num { font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; }
 .run-stats .r-label { color: var(--ink-faint); font-size: 10px; }
 .rpe-dot { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; font-size: 10px; font-weight: 800; color: white; }
+
+/* ---------- Vue Semaine ---------- */
+.day-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px; }
+.day-tab {
+  flex: 1; min-width: 42px; flex-shrink: 0;
+  text-align: center;
+  padding: 8px 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+}
+.day-tab .dt-label { font-size: 10px; color: var(--ink-faint); font-weight: 700; text-transform: uppercase; }
+.day-tab .dt-num { font-size: 15px; font-weight: 800; margin-top: 2px; }
+.day-tab .dt-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin: 3px auto 0; opacity: 0; }
+.day-tab.has-items .dt-dot { opacity: 1; }
+.day-tab.today { border-color: var(--accent); }
+.day-tab.selected { background: var(--ink); border-color: var(--ink); }
+.day-tab.selected .dt-label, .day-tab.selected .dt-num { color: var(--bg); }
+
+.week-item-row { display: flex; align-items: flex-start; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.week-item-row:last-child { border-bottom: none; }
+.week-item-time { font-size: 12px; font-weight: 700; color: var(--ink-soft); min-width: 40px; padding-top: 2px; }
+.week-item-body { flex: 1; }
+.week-item-title { font-size: 14px; font-weight: 600; }
+.week-item-row.done .week-item-title { color: var(--ink-faint); text-decoration: line-through; }
+
+.day-picker-row { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+.day-picker-row .chip { padding: 5px 9px; font-size: 11px; }

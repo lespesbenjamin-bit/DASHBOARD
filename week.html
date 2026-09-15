@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#3652FF" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Cockpit" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <title>Semaine — Cockpit</title>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="greeting">
+        <h1>📅 Semaine</h1>
+        <div class="date" id="week-range-label">—</div>
+      </div>
+      <a href="index.html" class="logout-link">← Aujourd'hui</a>
+    </div>
+
+    <div class="period-nav">
+      <button id="week-prev">←</button>
+      <span class="period-label" id="week-label">—</span>
+      <button id="week-next">→</button>
+    </div>
+
+    <div class="day-tabs" id="day-tabs"></div>
+
+    <div class="card">
+      <div id="day-items"><p class="empty">Chargement...</p></div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Aujourd'hui</span></a>
+    <a href="week.html" class="nav-item active"><span class="icon">📅</span><span>Semaine</span></a>
+    <a href="#" class="nav-add" id="nav-add">+</a>
+    <a href="business.html" class="nav-item"><span class="icon">💰</span><span>Business</span></a>
+    <a href="tasks.html" class="nav-item"><span class="icon">☰</span><span>Plus</span></a>
+  </nav>
+
+  <script src="supabase-config.js"></script>
+  <script src="auth.js"></script>
+  <script src="business-data.js"></script>
+  <script src="week.js"></script>
+  <script src="add-menu.js"></script>
+  <script src="pwa-register.js"></script>
+</body>
+</html>
