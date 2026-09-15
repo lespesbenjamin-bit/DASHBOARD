@@ -379,6 +379,22 @@ async function loadUniverses() {
   const { data: tasks } = await supabaseClient
     .from('tasks').select('category_id, status').neq('status', 'annule').eq('date', today);
 
+  // Carte Coaching : indépendante du filtre de période du bloc Pilotage,
+  // pour toujours voir tes cours même si tu regardes "Jour" ou "Mois" plus haut.
+  const { data: nextSessions } = await supabaseClient
+    .from('coaching_sessions').select('date, time, type')
+    .eq('status', 'prevu').gte('date', today)
+    .order('date', { ascending: true }).order('time', { ascending: true }).limit(1);
+
+  const monday = toISO(getMonday(new Date()));
+  const { data: weekSessions } = await supabaseClient
+    .from('coaching_sessions').select('status')
+    .gte('date', monday).lte('date', toISO(addDays(parseISO(monday), 6)))
+    .neq('status', 'annule');
+
+  const realiseCount = (weekSessions || []).filter(s => s.status === 'realise').length;
+  const nextSession = (nextSessions || [])[0];
+
   const OTHER_UNIVERSES = [
     { key: 'thalgo', label: 'Thalgo', icon: '💼' },
     { key: 'moka', label: 'Moka Studio', icon: '☕' },
@@ -386,7 +402,22 @@ async function loadUniverses() {
   ];
 
   const grid = document.getElementById('universe-grid');
-  grid.innerHTML = OTHER_UNIVERSES.map(u => {
+
+  const padelMeta = nextSession
+    ? `Prochain cours : ${formatDateShortUniv(nextSession.date)} ${nextSession.time?.slice(0, 5)}`
+    : 'Aucun cours à venir';
+
+  let html = `
+    <div class="universe-card padel" onclick="window.location.href='coaching.html'" style="cursor:pointer">
+      <div class="universe-head">
+        <span>🎾 Coaching Padel</span>
+        <span>${realiseCount} réalisé${realiseCount > 1 ? 's' : ''} cette sem.</span>
+      </div>
+      <div class="universe-meta">${padelMeta}</div>
+    </div>
+  `;
+
+  html += OTHER_UNIVERSES.map(u => {
     const catId = Object.keys(categoryById).find(id => categoryById[id].key === u.key);
     const universeTasks = (tasks || []).filter(t => t.category_id === catId);
     const remaining = universeTasks.filter(t => t.status !== 'termine');
@@ -405,6 +436,15 @@ async function loadUniverses() {
       </div>
     `;
   }).join('');
+
+  grid.innerHTML = html;
+}
+
+function formatDateShortUniv(iso) {
+  const today = todayISOLocal();
+  if (iso === today) return "aujourd'hui";
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
 init();

@@ -494,6 +494,7 @@ button { font-family: inherit; }
 }
 
 .universe-card:active { transform: scale(0.98); }
+.universe-card.padel { --accent-u: var(--padel); }
 .universe-card.thalgo { --accent-u: var(--thalgo); }
 .universe-card.moka { --accent-u: var(--moka); }
 .universe-card.running { --accent-u: var(--running); }
