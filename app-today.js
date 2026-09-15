@@ -96,13 +96,34 @@ async function loadPilotage() {
   const range = getPeriodRange(currentPeriodType, currentOffset);
   document.getElementById('period-label').textContent = range.label;
 
-  const [sessions, prevSessions] = await Promise.all([
+  const [sessions, prevSessions, tournaments, prevTournaments] = await Promise.all([
     fetchSessionsInRange(range.start, range.end),
     fetchSessionsInRange(range.prevStart, range.prevEnd),
+    fetchTournamentsInRange(range.start, range.end),
+    fetchTournamentsInRange(range.prevStart, range.prevEnd),
   ]);
 
-  const kpis = computeCoachingKPIs(sessions);
-  const prevKpis = computeCoachingKPIs(prevSessions);
+  const sessionKpis = computeCoachingKPIs(sessions);
+  const prevSessionKpis = computeCoachingKPIs(prevSessions);
+  const tournamentKpis = computeTournamentKPIs(tournaments);
+  const prevTournamentKpis = computeTournamentKPIs(prevTournaments);
+
+  // Padel = Coaching (cours) + Tournois, combinés pour le CA/net affichés en haut.
+  // Les autres indicateurs (redevance, marge, provision, heures, activité,
+  // pipeline) restent spécifiques aux cours, les tournois n'ayant ni redevance
+  // club ni provision URSSAF dans le modèle que tu m'as donné.
+  const kpis = {
+    ...sessionKpis,
+    caRealise: round2(sessionKpis.caRealise + tournamentKpis.caRealise),
+    caPlanifie: round2(sessionKpis.caPlanifie + tournamentKpis.caPlanifie),
+    netEstime: round2(sessionKpis.netEstime + tournamentKpis.netEstime),
+  };
+  const prevKpis = {
+    ...prevSessionKpis,
+    caRealise: round2(prevSessionKpis.caRealise + prevTournamentKpis.caRealise),
+    caPlanifie: round2(prevSessionKpis.caPlanifie + prevTournamentKpis.caPlanifie),
+    netEstime: round2(prevSessionKpis.netEstime + prevTournamentKpis.netEstime),
+  };
   lastKPIs = kpis;
 
   renderKPI('kpi-ca-realise', kpis.caRealise, prevKpis.caRealise, range.isCurrent);

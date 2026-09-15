@@ -853,3 +853,9 @@ button { font-family: inherit; }
 .sync-status { font-size: 12px; color: var(--ink-faint); margin-top: 8px; }
 .sync-status.ok { color: var(--padel); }
 .sync-status.error { color: var(--danger); }
+
+/* ---------- Tournois ---------- */
+.badge.P25 { background: var(--padel-soft); color: var(--padel); }
+.badge.P50 { background: var(--thalgo-soft); color: var(--thalgo); }
+.badge.P100 { background: var(--moka-soft); color: var(--moka); }
+.badge.P250 { background: var(--running-soft); color: var(--running); }

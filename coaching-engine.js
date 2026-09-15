@@ -33,6 +33,12 @@ async function getOrCreateCoachingSettings(userId) {
     redevance_hp_heure_debut: '18:00',
     redevance_hp_heure_fin: '21:00',
     provision_taux: 30,
+    tournoi_inscription_prix: 50,
+    tournoi_commission_taux: 25,
+    tournoi_homologation_p25: 15,
+    tournoi_homologation_p50: 17.5,
+    tournoi_homologation_p100: 20,
+    tournoi_homologation_p250: 25,
   };
 
   const { data: created } = await supabaseClient
@@ -105,4 +111,31 @@ function calculateSession({ type, durationMinutes, nbPlayers, time, tarifOverrid
 
 function round2(n) {
   return Math.round(n * 100) / 100;
+}
+
+// ============================================
+// MOTEUR DE CALCUL — TOURNOIS
+// ============================================
+// CA = nombre d'équipes × prix d'inscription × taux de commission.
+// Coût = frais d'homologation fixes selon le niveau (payés une fois par tournoi).
+// Net = CA - coût. Comme pour les cours, ces valeurs sont figées au moment de
+// l'enregistrement et ne sont jamais recalculées si les tarifs changent ensuite.
+
+function calculateTournament({ nbTeams, level }, settings) {
+  const inscriptionPrix = Number(settings.tournoi_inscription_prix);
+  const commissionTaux = Number(settings.tournoi_commission_taux);
+  const caBrut = nbTeams * inscriptionPrix * (commissionTaux / 100);
+
+  const homologationKey = `tournoi_homologation_${level.toLowerCase()}`;
+  const homologationCout = Number(settings[homologationKey] || 0);
+
+  const net = caBrut - homologationCout;
+
+  return {
+    inscription_prix: inscriptionPrix,
+    commission_taux: commissionTaux,
+    homologation_cout: round2(homologationCout),
+    ca_brut: round2(caBrut),
+    net: round2(net),
+  };
 }

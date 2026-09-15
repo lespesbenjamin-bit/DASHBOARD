@@ -386,3 +386,28 @@ async function setAppSetting(userId, key, value) {
     .from('app_settings')
     .upsert({ user_id: userId, key, value }, { onConflict: 'user_id,key' });
 }
+
+// ---------- TOURNOIS ----------
+async function fetchTournamentsInRange(startISO, endISO) {
+  const { data, error } = await supabaseClient
+    .from('tournaments').select('*')
+    .gte('date', startISO).lte('date', endISO);
+  if (error) { console.error('Erreur de chargement des tournois :', error); return []; }
+  return data || [];
+}
+
+function computeTournamentKPIs(tournaments) {
+  const nonAnnule = tournaments.filter(t => t.status !== 'annule');
+  const realise = nonAnnule.filter(t => t.status === 'realise');
+  const prevu = nonAnnule.filter(t => t.status === 'prevu');
+
+  return {
+    caRealise: round2(sum(realise, 'ca_brut')),
+    caPlanifie: round2(sum(nonAnnule, 'ca_brut')),
+    netEstime: round2(sum(nonAnnule, 'net')),
+    pipeline: {
+      realise: { count: realise.length, ca: round2(sum(realise, 'ca_brut')) },
+      prevu: { count: prevu.length, ca: round2(sum(prevu, 'ca_brut')) },
+    },
+  };
+}

@@ -6,14 +6,14 @@
 // IMPORTANT : ne met JAMAIS en cache les appels à Supabase (données/auth) —
 // seulement les fichiers statiques de l'app elle-même, servis en same-origin.
 
-const CACHE_NAME = 'cockpit-v2';
+const CACHE_NAME = 'cockpit-v4';
 
 const APP_SHELL = [
   'index.html', 'login.html', 'tasks.html', 'coaching.html',
-  'business.html', 'moka.html', 'running.html', 'week.html',
+  'business.html', 'moka.html', 'running.html', 'week.html', 'tournaments.html',
   'style.css', 'theme.js', 'auth.js', 'add-menu.js',
   'app-today.js', 'tasks.js', 'coaching.js', 'coaching-engine.js',
-  'business.js', 'business-data.js', 'moka.js', 'running.js', 'week.js', 'ics-sync.js',
+  'business.js', 'business-data.js', 'moka.js', 'running.js', 'week.js', 'ics-sync.js', 'tournaments.js',
   'manifest.json', 'icon-192.png', 'icon-512.png',
 ];
 

@@ -36,7 +36,16 @@ async function loadAll() {
   document.getElementById('period-sub').textContent = range.label;
 
   const sessions = await fetchSessionsInRange(range.start, range.end);
-  const kpis = computeCoachingKPIs(sessions);
+  const tournaments = await fetchTournamentsInRange(range.start, range.end);
+  const sessionKpis = computeCoachingKPIs(sessions);
+  const tournamentKpis = computeTournamentKPIs(tournaments);
+
+  const kpis = {
+    ...sessionKpis,
+    caRealise: round2(sessionKpis.caRealise + tournamentKpis.caRealise),
+    caPlanifie: round2(sessionKpis.caPlanifie + tournamentKpis.caPlanifie),
+    netEstime: round2(sessionKpis.netEstime + tournamentKpis.netEstime),
+  };
 
   document.getElementById('kpi-ca-realise').textContent = formatEuroB(kpis.caRealise);
   document.getElementById('kpi-ca-planifie').textContent = formatEuroB(kpis.caPlanifie);
