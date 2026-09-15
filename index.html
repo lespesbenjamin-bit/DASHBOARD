@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Aujourd'hui — Cockpit</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="greeting">
+        <h1 id="greeting-text">Bonjour 👋</h1>
+        <div class="date" id="today-date"></div>
+      </div>
+      <a href="#" class="logout-link" id="logout-btn">Déconnexion</a>
+    </div>
+
+    <!-- FOCUS DU JOUR -->
+    <div class="card">
+      <p class="card-title">🎯 FOCUS DU JOUR</p>
+      <div id="focus-list">
+        <p class="empty">Chargement...</p>
+      </div>
+    </div>
+
+    <!-- KPI DU JOUR -->
+    <div class="card">
+      <p class="card-title">AUJOURD'HUI</p>
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="num" id="kpi-tasks">–</div>
+          <div class="label">Tâches restantes</div>
+        </div>
+        <div class="kpi">
+          <div class="num" id="kpi-sessions">–</div>
+          <div class="label">Cours aujourd'hui</div>
+        </div>
+        <div class="kpi">
+          <div class="num" id="kpi-ca-prevu">–</div>
+          <div class="label">CA prévu</div>
+        </div>
+        <div class="kpi">
+          <div class="num" id="kpi-ca-realise">–</div>
+          <div class="label">CA réalisé</div>
+        </div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- LES 4 UNIVERS -->
+    <div class="universe-grid" id="universe-grid">
+      <!-- rempli en JS -->
+    </div>
+  </div>
+
+  <!-- NAV MOBILE -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item active">
+      <span class="icon">🏠</span><span>Aujourd'hui</span>
+    </a>
+    <a href="#" class="nav-item">
+      <span class="icon">📅</span><span>Semaine</span>
+    </a>
+    <a href="#" class="nav-add">+</a>
+    <a href="#" class="nav-item">
+      <span class="icon">💰</span><span>Business</span>
+    </a>
+    <a href="tasks.html" class="nav-item">
+      <span class="icon">☰</span><span>Plus</span>
+    </a>
+  </nav>
+
+  <script src="supabase-config.js"></script>
+  <script src="auth.js"></script>
+  <script src="app-today.js"></script>
+  <script src="add-menu.js"></script>
+</body>
+</html>

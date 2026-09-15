@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Tâches — Cockpit</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="greeting">
+        <h1>📋 Tâches</h1>
+        <div class="date" id="task-count-sub"></div>
+      </div>
+      <a href="index.html" class="logout-link">← Aujourd'hui</a>
+    </div>
+
+    <!-- INBOX (capture rapide non traitée) -->
+    <div class="card" id="inbox-card" style="display:none;">
+      <p class="card-title">💡 INBOX</p>
+      <div id="inbox-list"></div>
+    </div>
+
+    <!-- FILTRES -->
+    <div class="filter-tabs" id="filter-tabs">
+      <button class="filter-tab active" data-cat="all">Tout</button>
+      <button class="filter-tab" data-cat="padel">🎾 Padel</button>
+      <button class="filter-tab" data-cat="thalgo">💼 Thalgo</button>
+      <button class="filter-tab" data-cat="moka">☕ Moka</button>
+      <button class="filter-tab" data-cat="running">🏃 Running</button>
+    </div>
+    <div class="filter-toggle" id="toggle-done">Afficher les tâches terminées</div>
+
+    <!-- LISTE -->
+    <div class="card">
+      <div id="task-list">
+        <p class="empty">Chargement...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV MOBILE -->
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item">
+      <span class="icon">🏠</span><span>Aujourd'hui</span>
+    </a>
+    <a href="#" class="nav-item">
+      <span class="icon">📅</span><span>Semaine</span>
+    </a>
+    <a href="#" class="nav-add" id="nav-add">+</a>
+    <a href="#" class="nav-item">
+      <span class="icon">💰</span><span>Business</span>
+    </a>
+    <a href="#" class="nav-item active">
+      <span class="icon">☰</span><span>Plus</span>
+    </a>
+  </nav>
+
+  <!-- MODALE TÂCHE (création / édition) -->
+  <div class="modal-overlay" id="task-modal-overlay">
+    <div class="modal">
+      <h2 id="modal-title">Nouvelle tâche</h2>
+      <form id="task-form">
+        <input type="hidden" id="task-id" />
+
+        <div class="field">
+          <label>Titre</label>
+          <input type="text" id="f-title" required />
+        </div>
+
+        <div class="field">
+          <label>Catégorie</label>
+          <div class="chip-select" id="f-category">
+            <div class="chip" data-key="padel">🎾 Padel</div>
+            <div class="chip" data-key="thalgo">💼 Thalgo</div>
+            <div class="chip" data-key="moka">☕ Moka</div>
+            <div class="chip" data-key="running">🏃 Running</div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Date</label>
+            <input type="date" id="f-date" required />
+          </div>
+          <div class="field">
+            <label>Heure (optionnel)</label>
+            <input type="time" id="f-time" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Priorité</label>
+          <div class="chip-select" id="f-priority">
+            <div class="chip" data-key="haute">🔴 Haute</div>
+            <div class="chip" data-key="normale">🟠 Normale</div>
+            <div class="chip" data-key="faible">🟢 Faible</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Notes (optionnel)</label>
+          <textarea id="f-notes"></textarea>
+        </div>
+
+        <div class="field" id="recurrence-field">
+          <label>Récurrence</label>
+          <select id="f-recurrence">
+            <option value="aucune">Aucune</option>
+            <option value="quotidienne">Tous les jours</option>
+            <option value="hebdomadaire">Toutes les semaines</option>
+            <option value="mensuelle">Tous les mois</option>
+            <option value="personnalisee">Personnalisée</option>
+          </select>
+        </div>
+
+        <div class="field" id="days-field" style="display:none;">
+          <label>Jours de la semaine</label>
+          <div class="chip-select" id="f-days">
+            <div class="chip" data-day="1">Lun</div>
+            <div class="chip" data-day="2">Mar</div>
+            <div class="chip" data-day="3">Mer</div>
+            <div class="chip" data-day="4">Jeu</div>
+            <div class="chip" data-day="5">Ven</div>
+            <div class="chip" data-day="6">Sam</div>
+            <div class="chip" data-day="0">Dim</div>
+          </div>
+        </div>
+
+        <div class="field" id="custom-field" style="display:none;">
+          <label>Dates précises (une par ligne, AAAA-MM-JJ)</label>
+          <textarea id="f-custom-dates" placeholder="2026-09-20&#10;2026-10-05"></textarea>
+        </div>
+
+        <p class="error-msg" id="task-error"></p>
+
+        <div class="modal-buttons">
+          <button type="button" class="btn-secondary" id="cancel-modal">Annuler</button>
+          <button type="submit" class="btn-primary" id="save-task-btn">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="supabase-config.js"></script>
+  <script src="auth.js"></script>
+  <script src="tasks.js"></script>
+  <script src="add-menu.js"></script>
+</body>
+</html>
