@@ -63,7 +63,7 @@ async function syncICSNow() {
     renderDayTabs();
     renderDayItems();
   } catch (e) {
-    setSyncStatus("Échec de la synchronisation — vérifie le lien, ou réessaie plus tard.", 'error');
+    setSyncStatus(`Échec : ${e.message}`, 'error');
     console.error(e);
   }
 }

@@ -23,23 +23,36 @@ async function fetchICSEvents(rawUrl) {
   } catch (e) { /* cache corrompu, on ignore */ }
 
   let text = null;
+  let lastError = null;
 
   // 1. Tentative directe (fonctionne si le fournisseur autorise le CORS)
   try {
     const res = await fetch(url);
     if (res.ok) text = await res.text();
-  } catch (e) { /* on tente le proxy ensuite */ }
+    else lastError = `Tentative directe : HTTP ${res.status}`;
+  } catch (e) { lastError = `Tentative directe : ${e.message}`; }
 
-  // 2. Repli via un proxy CORS public, nécessaire pour la plupart des flux iCal
+  // 2. Repli via un premier proxy CORS public
   if (!text) {
     try {
       const proxied = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
       const res2 = await fetch(proxied);
       if (res2.ok) text = await res2.text();
-    } catch (e) { /* échec complet, on remontera une erreur */ }
+      else lastError = `Proxy 1 : HTTP ${res2.status}`;
+    } catch (e) { lastError = `Proxy 1 : ${e.message}`; }
   }
 
-  if (!text) throw new Error("Impossible de récupérer l'agenda externe.");
+  // 3. Repli via un second proxy CORS public (au cas où le premier serait indisponible)
+  if (!text) {
+    try {
+      const proxied2 = 'https://corsproxy.io/?url=' + encodeURIComponent(url);
+      const res3 = await fetch(proxied2);
+      if (res3.ok) text = await res3.text();
+      else lastError = `Proxy 2 : HTTP ${res3.status}`;
+    } catch (e) { lastError = `Proxy 2 : ${e.message}`; }
+  }
+
+  if (!text) throw new Error(`Impossible de récupérer l'agenda externe. (${lastError})`);
 
   const events = parseICS(text);
   try {
