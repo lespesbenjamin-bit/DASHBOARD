@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Coaching Padel — Cockpit</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="greeting">
+        <h1>🎾 Coaching</h1>
+        <div class="date" id="session-count-sub"></div>
+      </div>
+      <a href="index.html" class="logout-link">← Aujourd'hui</a>
+    </div>
+
+    <div class="filter-tabs" id="filter-tabs">
+      <button class="filter-tab active" data-status="upcoming">À venir</button>
+      <button class="filter-tab" data-status="realise">Réalisés</button>
+      <button class="filter-tab" data-status="all">Tous</button>
+    </div>
+
+    <div id="session-list">
+      <p class="empty">Chargement...</p>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item">
+      <span class="icon">🏠</span><span>Aujourd'hui</span>
+    </a>
+    <a href="#" class="nav-item">
+      <span class="icon">📅</span><span>Semaine</span>
+    </a>
+    <a href="#" class="nav-add" id="nav-add">+</a>
+    <a href="#" class="nav-item">
+      <span class="icon">💰</span><span>Business</span>
+    </a>
+    <a href="tasks.html" class="nav-item active">
+      <span class="icon">☰</span><span>Plus</span>
+    </a>
+  </nav>
+
+  <!-- MODALE COURS -->
+  <div class="modal-overlay" id="session-modal-overlay">
+    <div class="modal">
+      <h2 id="modal-title">Nouveau cours</h2>
+      <form id="session-form">
+        <input type="hidden" id="s-id" />
+
+        <div class="field-row">
+          <div class="field">
+            <label>Date</label>
+            <input type="date" id="s-date" required />
+          </div>
+          <div class="field">
+            <label>Heure</label>
+            <input type="time" id="s-time" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Durée</label>
+          <select id="s-duration">
+            <option value="30">30 min</option>
+            <option value="60" selected>1h</option>
+            <option value="90">1h30</option>
+            <option value="120">2h</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Type de cours</label>
+          <div class="chip-select" id="s-type">
+            <div class="chip" data-key="individuel">Individuel</div>
+            <div class="chip" data-key="duo">Duo</div>
+            <div class="chip" data-key="collectif">Collectif</div>
+            <div class="chip" data-key="partie_coachee">Partie coachée</div>
+            <div class="chip" data-key="autre">Autre</div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Nombre de joueurs</label>
+          <input type="number" id="s-players" min="1" value="1" required />
+        </div>
+
+        <div class="field">
+          <label>Tarif manuel (optionnel — sinon calcul automatique)</label>
+          <input type="number" id="s-tarif-override" placeholder="Laisser vide pour calcul auto" step="0.01" />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label>Statut</label>
+            <select id="s-status">
+              <option value="prevu">Prévu</option>
+              <option value="realise">Réalisé</option>
+              <option value="annule">Annulé</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Paiement</label>
+            <select id="s-payment">
+              <option value="a_payer">À payer</option>
+              <option value="paye">Payé</option>
+              <option value="offert">Offert / inclus pack</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Notes (optionnel)</label>
+          <textarea id="s-notes"></textarea>
+        </div>
+
+        <div class="field" id="s-recurrence-field">
+          <label>Récurrence</label>
+          <select id="s-recurrence">
+            <option value="ponctuel">Ponctuel</option>
+            <option value="recurrent">Récurrent (même jour, chaque semaine)</option>
+          </select>
+        </div>
+
+        <!-- Aperçu du calcul, mis à jour en direct -->
+        <div class="card" id="calc-preview" style="margin-top:6px;">
+          <p class="card-title">CALCUL ESTIMÉ</p>
+          <div class="session-amounts">
+            <div class="amount-block"><div class="amount-num" id="prev-ca">–</div><div class="amount-label">CA BRUT</div></div>
+            <div class="amount-block"><div class="amount-num" id="prev-redevance">–</div><div class="amount-label">REDEVANCE</div></div>
+            <div class="amount-block"><div class="amount-num" id="prev-marge">–</div><div class="amount-label">MARGE</div></div>
+            <div class="amount-block"><div class="amount-num" id="prev-net">–</div><div class="amount-label">NET EST.</div></div>
+          </div>
+        </div>
+
+        <p class="error-msg" id="session-error"></p>
+
+        <div class="modal-buttons">
+          <button type="button" class="btn-secondary" id="cancel-session-modal">Annuler</button>
+          <button type="submit" class="btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="supabase-config.js"></script>
+  <script src="auth.js"></script>
+  <script src="coaching-engine.js"></script>
+  <script src="coaching.js"></script>
+  <script src="add-menu.js"></script>
+</body>
+</html>

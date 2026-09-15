@@ -16,8 +16,8 @@ function injectAddMenu() {
         <button class="sheet-option" id="opt-idee">
           <span class="icon">💡</span> Idée (capture rapide)
         </button>
-        <button class="sheet-option" disabled>
-          <span class="icon">🎾</span> Cours Padel — bientôt
+        <button class="sheet-option" id="opt-cours">
+          <span class="icon">🎾</span> Cours Padel
         </button>
         <button class="sheet-option" disabled>
           <span class="icon">💶</span> Revenu — bientôt
@@ -47,6 +47,15 @@ function injectAddMenu() {
     }
   });
 
+  document.getElementById('opt-cours').addEventListener('click', () => {
+    overlay.classList.remove('open');
+    if (typeof openCoachingModal === 'function') {
+      openCoachingModal();
+    } else {
+      window.location.href = 'coaching.html?new=1';
+    }
+  });
+
   document.getElementById('opt-idee').addEventListener('click', async () => {
     overlay.classList.remove('open');
     const content = window.prompt("Capture rapide — qu'est-ce que tu veux noter ?");
@@ -69,8 +78,11 @@ function injectAddMenu() {
 
   // Ouverture automatique si on arrive avec ?new=1 dans l'URL (redirection depuis une autre page)
   const params = new URLSearchParams(window.location.search);
-  if (params.get('new') === '1' && typeof openTaskModal === 'function') {
-    setTimeout(() => openTaskModal(), 150);
+  if (params.get('new') === '1') {
+    setTimeout(() => {
+      if (typeof openTaskModal === 'function') openTaskModal();
+      else if (typeof openCoachingModal === 'function') openCoachingModal();
+    }, 150);
   }
 }
 

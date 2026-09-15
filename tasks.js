@@ -36,8 +36,16 @@ async function init() {
   currentUser = await requireAuth();
   if (!currentUser) return;
 
-  const { data: cats } = await supabaseClient.from('categories').select('id, key, label');
-  categories = cats || [];
+  const { data: cats, error: catError } = await supabaseClient.from('categories').select('id, key, label');
+
+  if (catError || !cats || cats.length === 0) {
+    document.getElementById('task-list').innerHTML =
+      `<p class="empty">Impossible de charger les catégories. Vérifie dans Supabase que la table "categories" contient bien 4 lignes et qu'elle est accessible en lecture.</p>`;
+    console.error('Erreur de chargement des catégories :', catError);
+    return; // on stoppe ici, inutile d'aller plus loin sans catégories
+  }
+
+  categories = cats;
   categories.forEach(c => { categoryByKey[c.key] = c; categoryById[c.id] = c; });
 
   document.getElementById('toggle-done').addEventListener('click', () => {
@@ -362,6 +370,13 @@ async function handleSubmit(e) {
   }
 
   const category = categoryByKey[catChip.dataset.key];
+
+  if (!category) {
+    errorEl.textContent = "Les catégories ne sont pas chargées correctement. Recharge la page et réessaie.";
+    errorEl.style.display = 'block';
+    return;
+  }
+
   const priority = priorityChip.dataset.key;
 
   if (editingTaskId) {

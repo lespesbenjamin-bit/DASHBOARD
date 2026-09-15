@@ -599,6 +599,66 @@ a { color: inherit; }
 
 .modal-buttons .btn-primary { flex: 1; width: auto; }
 
+/* ---------- Cartes cours (Coaching Padel) ---------- */
+.session-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+.session-card + .session-card { margin-top: 10px; }
+
+.session-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.session-when {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.session-sub {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge.prevu { background: #EEF1F5; color: var(--thalgo); }
+.badge.realise { background: var(--padel-soft); color: var(--padel); }
+.badge.annule { background: var(--running-soft); color: var(--running); }
+
+.badge.paye { background: var(--padel-soft); color: var(--padel); }
+.badge.a_payer { background: #FBEFDD; color: var(--warning); }
+.badge.offert { background: #EEF1F5; color: var(--ink-soft); }
+
+.session-badges { display: flex; gap: 6px; margin-top: 8px; }
+
+.session-amounts {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.session-amounts .amount-block { text-align: center; }
+.session-amounts .amount-num { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600; }
+.session-amounts .amount-label { color: var(--ink-faint); font-size: 10px; margin-top: 1px; }
+
 /* ---------- Bottom nav (mobile) ---------- */
 .bottom-nav {
   position: fixed;
