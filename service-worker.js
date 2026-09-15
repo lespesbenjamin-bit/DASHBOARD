@@ -13,7 +13,7 @@ const APP_SHELL = [
   'business.html', 'moka.html', 'running.html', 'week.html',
   'style.css', 'theme.js', 'auth.js', 'add-menu.js',
   'app-today.js', 'tasks.js', 'coaching.js', 'coaching-engine.js',
-  'business.js', 'business-data.js', 'moka.js', 'running.js', 'week.js',
+  'business.js', 'business-data.js', 'moka.js', 'running.js', 'week.js', 'ics-sync.js',
   'manifest.json', 'icon-192.png', 'icon-512.png',
 ];
 

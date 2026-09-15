@@ -847,3 +847,9 @@ button { font-family: inherit; }
 
 .day-picker-row { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
 .day-picker-row .chip { padding: 5px 9px; font-size: 11px; }
+
+/* ---------- Synchronisation agenda externe ---------- */
+.badge.externe { background: var(--surface-tint); color: var(--ink-soft); }
+.sync-status { font-size: 12px; color: var(--ink-faint); margin-top: 8px; }
+.sync-status.ok { color: var(--padel); }
+.sync-status.error { color: var(--danger); }

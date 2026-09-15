@@ -372,3 +372,17 @@ async function fetchMokaKPIs(userId, monthRange) {
     subscriptions: subs || [],
   };
 }
+
+// ---------- Réglages génériques (app_settings) ----------
+async function getAppSetting(userId, key) {
+  const { data } = await supabaseClient
+    .from('app_settings').select('value')
+    .eq('user_id', userId).eq('key', key).maybeSingle();
+  return data?.value || null;
+}
+
+async function setAppSetting(userId, key, value) {
+  await supabaseClient
+    .from('app_settings')
+    .upsert({ user_id: userId, key, value }, { onConflict: 'user_id,key' });
+}

@@ -9,6 +9,7 @@ let weekTasks = [];
 let weekSessions = [];
 let weekRuns = [];
 let weekDates = [];
+let externalEvents = [];
 
 function escapeHTMLW(str) {
   const div = document.createElement('div');
@@ -23,7 +24,54 @@ async function init() {
   document.getElementById('week-prev').addEventListener('click', () => { weekOffset -= 1; loadWeek(); });
   document.getElementById('week-next').addEventListener('click', () => { weekOffset += 1; loadWeek(); });
 
+  await setupICSSync();
   await loadWeek();
+}
+
+// ============================================
+// SYNCHRONISATION AGENDA EXTERNE
+// ============================================
+
+async function setupICSSync() {
+  const saved = await getAppSetting(currentUser.id, 'ics_url');
+  if (saved?.url) document.getElementById('ics-url-input').value = saved.url;
+
+  document.getElementById('save-ics-url').addEventListener('click', async () => {
+    const url = document.getElementById('ics-url-input').value.trim();
+    if (!url) return;
+    await setAppSetting(currentUser.id, 'ics_url', { url });
+    sessionStorage.removeItem('ics_events_cache');
+    setSyncStatus('Lien enregistré. Synchronisation...', 'ok');
+    await syncICSNow();
+  });
+
+  document.getElementById('sync-ics-now').addEventListener('click', syncICSNow);
+
+  if (saved?.url) await syncICSNow();
+}
+
+async function syncICSNow() {
+  const url = document.getElementById('ics-url-input').value.trim();
+  if (!url) {
+    setSyncStatus("Ajoute d'abord le lien d'abonnement de ton appli de réservation.", 'error');
+    return;
+  }
+  setSyncStatus('Synchronisation en cours...', '');
+  try {
+    externalEvents = await fetchICSEvents(url);
+    setSyncStatus(`✓ ${externalEvents.length} événement(s) synchronisé(s).`, 'ok');
+    renderDayTabs();
+    renderDayItems();
+  } catch (e) {
+    setSyncStatus("Échec de la synchronisation — vérifie le lien, ou réessaie plus tard.", 'error');
+    console.error(e);
+  }
+}
+
+function setSyncStatus(text, kind) {
+  const el = document.getElementById('sync-status');
+  el.textContent = text;
+  el.className = 'sync-status' + (kind ? ' ' + kind : '');
 }
 
 async function loadWeek() {
@@ -67,7 +115,8 @@ function renderDayTabs() {
     const d = new Date(iso + 'T00:00:00');
     const label = d.toLocaleDateString('fr-FR', { weekday: 'short' });
     const num = d.getDate();
-    const hasItems = weekTasks.some(t => t.date === iso) || weekSessions.some(s => s.date === iso) || weekRuns.some(r => r.date === iso);
+    const hasItems = weekTasks.some(t => t.date === iso) || weekSessions.some(s => s.date === iso)
+      || weekRuns.some(r => r.date === iso) || externalEvents.some(e => e.start?.date === iso);
     const classes = ['day-tab'];
     if (iso === todayIso) classes.push('today');
     if (i === selectedDayIndex) classes.push('selected');
@@ -105,6 +154,9 @@ function renderDayItems() {
     ...weekRuns.filter(r => r.date === iso).map(r => ({
       sortKey: '99:99', type: 'run', data: r,
     })),
+    ...externalEvents.filter(e => e.start?.date === iso).map(e => ({
+      sortKey: e.start?.time || '00:00', type: 'external', data: e,
+    })),
   ].sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 
   if (items.length === 0) {
@@ -117,6 +169,19 @@ function renderDayItems() {
 }
 
 function renderItem(item) {
+  if (item.type === 'external') {
+    const e = item.data;
+    return `
+      <div class="week-item-row">
+        <div class="week-item-time">${e.start?.time || ''}</div>
+        <div class="week-item-body">
+          <div class="week-item-title">📆 ${escapeHTMLW(e.title || 'Réservation')}</div>
+          <div class="task-meta">Depuis ton agenda de réservation</div>
+        </div>
+        <span class="badge externe">Résa club</span>
+      </div>
+    `;
+  }
   if (item.type === 'session') {
     const s = item.data;
     return `
