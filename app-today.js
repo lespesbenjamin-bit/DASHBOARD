@@ -43,7 +43,7 @@ async function init() {
 
   document.getElementById('qa-tache').addEventListener('click', () => window.location.href = 'tasks.html?new=1');
   document.getElementById('qa-cours').addEventListener('click', () => window.location.href = 'coaching.html?new=1');
-  document.getElementById('qa-entrainement').addEventListener('click', () => alert('Module Running — bientôt disponible.'));
+  document.getElementById('qa-entrainement').addEventListener('click', () => window.location.href = 'running.html?new=1');
   document.getElementById('capture-card').addEventListener('click', quickCapture);
 
   document.querySelectorAll('#period-segmented button').forEach(btn => {
@@ -424,9 +424,10 @@ async function loadUniverses() {
     const total = universeTasks.length;
     const done = total - remaining.length;
     const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    const clickable = u.key === 'running' ? " onclick=\"window.location.href='running.html'\" style=\"cursor:pointer\"" : '';
 
     return `
-      <div class="universe-card ${u.key}">
+      <div class="universe-card ${u.key}"${clickable}>
         <div class="universe-head">
           <span>${u.icon} ${u.label}</span>
           <span>${remaining.length} tâche${remaining.length > 1 ? 's' : ''}</span>

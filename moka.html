@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Moka Studio — Cockpit</title>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="greeting">
+        <h1>☕ Moka Studio</h1>
+        <div class="date" id="header-sub"></div>
+      </div>
+      <a href="business.html" class="logout-link">← Business</a>
+    </div>
+
+    <div class="kpi-hero-grid">
+      <div class="kpi-hero accent">
+        <div class="kpi-hero-label">MRR actuel</div>
+        <div class="kpi-hero-num" id="kpi-mrr">–</div>
+      </div>
+      <div class="kpi-hero">
+        <div class="kpi-hero-label">Clients actifs</div>
+        <div class="kpi-hero-num" id="kpi-clients">–</div>
+      </div>
+      <div class="kpi-hero">
+        <div class="kpi-hero-label">Revenu ponctuel (mois)</div>
+        <div class="kpi-hero-num" id="kpi-ponctuel">–</div>
+      </div>
+      <div class="kpi-hero">
+        <div class="kpi-hero-label">CA Moka du mois</div>
+        <div class="kpi-hero-num" id="kpi-ca-mois">–</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">
+        CLIENTS
+        <span class="icon-btn" id="btn-add-client" style="background:var(--moka-soft);color:var(--moka);border-radius:8px;width:auto;padding:4px 10px;font-weight:700;font-size:12px;">+ Client</span>
+      </p>
+      <div id="clients-list"><p class="empty">Chargement...</p></div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">
+        REVENUS PONCTUELS
+        <span class="icon-btn" id="btn-add-revenue" style="background:var(--moka-soft);color:var(--moka);border-radius:8px;width:auto;padding:4px 10px;font-weight:700;font-size:12px;">+ Revenu</span>
+      </p>
+      <div id="revenue-list"><p class="empty">Chargement...</p></div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Aujourd'hui</span></a>
+    <a href="#" class="nav-item"><span class="icon">📅</span><span>Semaine</span></a>
+    <a href="#" class="nav-add" id="nav-add">+</a>
+    <a href="business.html" class="nav-item active"><span class="icon">💰</span><span>Business</span></a>
+    <a href="tasks.html" class="nav-item"><span class="icon">☰</span><span>Plus</span></a>
+  </nav>
+
+  <!-- MODALE CLIENT -->
+  <div class="modal-overlay" id="client-modal-overlay">
+    <div class="modal">
+      <h2 id="client-modal-title">Nouveau client</h2>
+      <form id="client-form">
+        <input type="hidden" id="c-id" />
+        <div class="field"><label>Nom</label><input type="text" id="c-name" required /></div>
+        <div class="field"><label>Contact (optionnel)</label><input type="text" id="c-contact" /></div>
+        <div class="field">
+          <label>Statut</label>
+          <select id="c-status"><option value="actif">Actif</option><option value="inactif">Inactif</option></select>
+        </div>
+        <p class="error-msg" id="client-error"></p>
+        <div class="modal-buttons">
+          <button type="button" class="btn-secondary" id="cancel-client-modal">Annuler</button>
+          <button type="submit" class="btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODALE ABONNEMENT -->
+  <div class="modal-overlay" id="sub-modal-overlay">
+    <div class="modal">
+      <h2>Ajouter un abonnement / option</h2>
+      <form id="sub-form">
+        <input type="hidden" id="sub-client-id" />
+        <div class="field"><label>Libellé</label><input type="text" id="sub-label" placeholder="Ex: Site abonnement, Option planning" required /></div>
+        <div class="field"><label>Montant mensuel (€)</label><input type="number" id="sub-montant" step="0.01" required /></div>
+        <div class="field"><label>Date de début</label><input type="date" id="sub-date-debut" required /></div>
+        <p class="error-msg" id="sub-error"></p>
+        <div class="modal-buttons">
+          <button type="button" class="btn-secondary" id="cancel-sub-modal">Annuler</button>
+          <button type="submit" class="btn-primary">Ajouter</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODALE REVENU PONCTUEL -->
+  <div class="modal-overlay" id="revenue-modal-overlay">
+    <div class="modal">
+      <h2>Nouveau revenu ponctuel</h2>
+      <form id="revenue-form">
+        <div class="field">
+          <label>Type</label>
+          <div class="chip-select" id="r-type">
+            <div class="chip selected" data-key="one_shot">One-shot</div>
+            <div class="chip" data-key="autre">Autre</div>
+          </div>
+        </div>
+        <div class="field"><label>Libellé</label><input type="text" id="r-label" placeholder="Ex: Vente site, Mise en service" required /></div>
+        <div class="field"><label>Montant (€)</label><input type="number" id="r-montant" step="0.01" required /></div>
+        <div class="field"><label>Date</label><input type="date" id="r-date" required /></div>
+        <div class="field">
+          <label>Client (optionnel)</label>
+          <select id="r-client"><option value="">— Aucun —</option></select>
+        </div>
+        <p class="error-msg" id="revenue-error"></p>
+        <div class="modal-buttons">
+          <button type="button" class="btn-secondary" id="cancel-revenue-modal">Annuler</button>
+          <button type="submit" class="btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="supabase-config.js"></script>
+  <script src="auth.js"></script>
+  <script src="business-data.js"></script>
+  <script src="moka.js"></script>
+  <script src="add-menu.js"></script>
+</body>
+</html>

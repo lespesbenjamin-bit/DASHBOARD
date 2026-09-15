@@ -343,3 +343,32 @@ async function fetchObjective(userId, periodRange) {
     .maybeSingle();
   return data?.ca_objectif ? round2(Number(data.ca_objectif) / 7) : null;
 }
+
+// ---------- MOKA STUDIO ----------
+// MRR = somme des abonnements/options actifs (moka_subscriptions.active = true).
+// CA du mois = MRR (approximation : montant mensuel courant, sans prorata sur
+// les dates exactes de début/fin en cours de mois) + revenus ponctuels du mois.
+async function fetchMokaKPIs(userId, monthRange) {
+  const { data: subs } = await supabaseClient
+    .from('moka_subscriptions').select('*, moka_clients(name, status)')
+    .eq('active', true);
+
+  const { data: oneShots } = await supabaseClient
+    .from('revenue_entries').select('*')
+    .gte('date', monthRange.start).lte('date', monthRange.end)
+    .in('type', ['one_shot', 'autre']);
+
+  const { data: activeClients } = await supabaseClient
+    .from('moka_clients').select('id').eq('status', 'actif');
+
+  const mrr = round2(sum(subs || [], 'montant_mensuel'));
+  const revenuPonctuel = round2(sum(oneShots || [], 'montant'));
+
+  return {
+    mrr,
+    revenuPonctuel,
+    caDuMois: round2(mrr + revenuPonctuel),
+    clientsActifs: (activeClients || []).length,
+    subscriptions: subs || [],
+  };
+}

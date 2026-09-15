@@ -58,9 +58,27 @@ async function loadAll() {
   document.getElementById('pipe-annule-count').textContent = kpis.pipeline.annule.count;
   document.getElementById('pipe-annule-amount').textContent = formatEuroB(kpis.pipeline.annule.ca) + ' perdus';
 
-  // Total entrepreneurial : Moka pas encore branché, donc = Coaching seul pour l'instant
-  document.getElementById('total-ca').textContent = formatEuroB(kpis.caRealise);
-  document.getElementById('total-net').textContent = formatEuroB(kpis.netEstime);
+  // Total entrepreneurial : Moka se raisonne par mois (abonnements), donc on
+  // ne l'additionne au total que lorsque la période sélectionnée est "Mois" —
+  // sinon les bases de calcul (ex. CA d'une journée vs MRR mensuel) ne sont
+  // pas comparables et donneraient un total trompeur.
+  const monthRange = getPeriodRange('mois', 0);
+  const mokaKpis = await fetchMokaKPIs(currentUser.id, monthRange);
+
+  document.getElementById('moka-mrr').textContent = formatEuroB(mokaKpis.mrr);
+  document.getElementById('moka-clients').textContent = mokaKpis.clientsActifs;
+  document.getElementById('moka-ca-mois').textContent = formatEuroB(mokaKpis.caDuMois);
+
+  const totalNote = document.getElementById('total-note');
+  if (range.type === 'mois' && range.isCurrent) {
+    document.getElementById('total-ca').textContent = formatEuroB(kpis.caRealise + mokaKpis.caDuMois);
+    document.getElementById('total-net').textContent = formatEuroB(kpis.netEstime + mokaKpis.caDuMois);
+    totalNote.textContent = '';
+  } else {
+    document.getElementById('total-ca').textContent = formatEuroB(kpis.caRealise);
+    document.getElementById('total-net').textContent = formatEuroB(kpis.netEstime);
+    totalNote.textContent = "Coaching seul sur cette période — sélectionne \"Mois\" (période actuelle) pour inclure Moka au total.";
+  }
 
   renderChart(range, sessions);
 }

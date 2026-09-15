@@ -103,9 +103,13 @@
     </div>
 
     <!-- ☕ MOKA STUDIO -->
-    <div class="card">
+    <div class="card" onclick="window.location.href='moka.html'" style="cursor:pointer;">
       <p class="card-title">☕ MOKA STUDIO</p>
-      <div class="coming-soon">Module Moka Studio — bientôt disponible.<br/>Ce bloc affichera MRR, clients actifs et CA du mois.</div>
+      <div class="kpi-secondary-row" style="border-top:none;padding-top:0;">
+        <span>MRR : <b id="moka-mrr">–</b></span>
+        <span>Clients actifs : <b id="moka-clients">–</b></span>
+        <span>CA du mois : <b id="moka-ca-mois">–</b></span>
+      </div>
     </div>
 
     <!-- TOTAL ENTREPRENEURIAL -->
@@ -115,7 +119,7 @@
         <span>CA réalisé : <b id="total-ca">–</b></span>
         <span>Net estimé : <b id="total-net">–</b></span>
       </div>
-      <p class="empty" style="margin-top:8px;">Complet une fois Moka Studio branché.</p>
+      <p class="empty" id="total-note" style="margin-top:8px;"></p>
     </div>
   </div>
 

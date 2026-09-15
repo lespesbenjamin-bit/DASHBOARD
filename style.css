@@ -787,3 +787,34 @@ button { font-family: inherit; }
 }
 
 .nav-add:active { transform: scale(0.92); }
+
+/* ---------- Moka Studio — clients & abonnements ---------- */
+.client-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: var(--shadow); padding: 14px 16px; }
+.client-card + .client-card { margin-top: 10px; }
+.client-top { display: flex; justify-content: space-between; align-items: center; }
+.client-name { font-size: 14px; font-weight: 700; }
+.client-mrr { font-size: 14px; font-weight: 800; color: var(--moka); }
+
+.badge.actif { background: var(--padel-soft); color: var(--padel); }
+.badge.inactif { background: var(--surface-tint); color: var(--ink-faint); }
+
+.sub-row { display: flex; justify-content: space-between; padding: 7px 0; font-size: 12px; border-top: 1px solid var(--border); margin-top: 8px; }
+.sub-row .sub-label { color: var(--ink-soft); }
+.sub-row .sub-amount { font-weight: 700; }
+
+.entry-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.entry-row:last-child { border-bottom: none; }
+.entry-row .e-label { font-weight: 600; }
+.entry-row .e-meta { font-size: 11px; color: var(--ink-soft); }
+.entry-row .e-amount { font-weight: 700; color: var(--moka); }
+
+/* ---------- Running ---------- */
+.run-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; box-shadow: var(--shadow); }
+.run-card + .run-card { margin-top: 10px; }
+.run-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.run-type { font-size: 14px; font-weight: 700; }
+.run-sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.run-stats { display: flex; gap: 14px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; }
+.run-stats .r-num { font-weight: 800; font-family: 'Plus Jakarta Sans', sans-serif; }
+.run-stats .r-label { color: var(--ink-faint); font-size: 10px; }
+.rpe-dot { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; font-size: 10px; font-weight: 800; color: white; }

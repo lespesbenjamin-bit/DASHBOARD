@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Running — Cockpit</title>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="greeting">
+        <h1>🏃 Course à pied</h1>
+        <div class="date" id="week-sub"></div>
+      </div>
+      <a href="index.html" class="logout-link">← Aujourd'hui</a>
+    </div>
+
+    <!-- STATS DE LA SEMAINE -->
+    <div class="card">
+      <p class="card-title">CETTE SEMAINE</p>
+      <div class="kpi-hero-grid">
+        <div class="kpi-hero">
+          <div class="kpi-hero-label">Distance</div>
+          <div class="kpi-hero-num" id="week-km">–</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="kpi-hero-label">Dénivelé (D+)</div>
+          <div class="kpi-hero-num" id="week-dplus">–</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="kpi-hero-label">Temps total</div>
+          <div class="kpi-hero-num" id="week-temps">–</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="kpi-hero-label">Séances</div>
+          <div class="kpi-hero-num" id="week-count">–</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-tabs" id="filter-tabs">
+      <button class="filter-tab active" data-filter="all">Toutes</button>
+      <button class="filter-tab" data-filter="realized">Réalisées</button>
+      <button class="filter-tab" data-filter="planned">Prévues</button>
+    </div>
+
+    <div id="session-list"><p class="empty">Chargement...</p></div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Aujourd'hui</span></a>
+    <a href="#" class="nav-item"><span class="icon">📅</span><span>Semaine</span></a>
+    <a href="#" class="nav-add" id="nav-add">+</a>
+    <a href="business.html" class="nav-item"><span class="icon">💰</span><span>Business</span></a>
+    <a href="tasks.html" class="nav-item active"><span class="icon">☰</span><span>Plus</span></a>
+  </nav>
+
+  <!-- MODALE SÉANCE -->
+  <div class="modal-overlay" id="run-modal-overlay">
+    <div class="modal">
+      <h2 id="run-modal-title">Nouvelle séance</h2>
+      <form id="run-form">
+        <input type="hidden" id="ru-id" />
+
+        <div class="field">
+          <label>Type</label>
+          <div class="chip-select" id="ru-type">
+            <div class="chip selected" data-key="Footing">Footing</div>
+            <div class="chip" data-key="Seuil">Seuil</div>
+            <div class="chip" data-key="VMA">VMA</div>
+            <div class="chip" data-key="Trail">Trail</div>
+            <div class="chip" data-key="Sortie longue">Sortie longue</div>
+            <div class="chip" data-key="Renforcement">Renforcement</div>
+            <div class="chip" data-key="Récupération">Récupération</div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field"><label>Date</label><input type="date" id="ru-date" required /></div>
+          <div class="field"><label>Durée (min)</label><input type="number" id="ru-duration" min="0" /></div>
+        </div>
+
+        <div class="field-row">
+          <div class="field"><label>Distance (km)</label><input type="number" id="ru-distance" step="0.1" min="0" /></div>
+          <div class="field"><label>D+ (m)</label><input type="number" id="ru-dplus" min="0" /></div>
+        </div>
+
+        <div class="field">
+          <label>RPE (ressenti d'effort, 1-10)</label>
+          <input type="range" id="ru-rpe" min="1" max="10" value="5" />
+          <div style="text-align:center;font-weight:700;margin-top:4px;" id="ru-rpe-value">5</div>
+        </div>
+
+        <div class="field">
+          <label>Statut</label>
+          <div class="chip-select">
+            <div class="chip selected" id="ru-realized-yes">Réalisée</div>
+            <div class="chip" id="ru-realized-no">Prévue</div>
+          </div>
+        </div>
+
+        <div class="field"><label>Commentaire (optionnel)</label><textarea id="ru-comment"></textarea></div>
+
+        <p class="error-msg" id="run-error"></p>
+
+        <div class="modal-buttons">
+          <button type="button" class="btn-secondary" id="cancel-run-modal">Annuler</button>
+          <button type="submit" class="btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="supabase-config.js"></script>
+  <script src="auth.js"></script>
+  <script src="running.js"></script>
+  <script src="add-menu.js"></script>
+</body>
+</html>

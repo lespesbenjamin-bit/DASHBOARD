@@ -19,11 +19,11 @@ function injectAddMenu() {
         <button class="sheet-option" id="opt-cours">
           <span class="icon">🎾</span> Cours Padel
         </button>
-        <button class="sheet-option" disabled>
-          <span class="icon">💶</span> Revenu — bientôt
+        <button class="sheet-option" id="opt-revenu">
+          <span class="icon">💶</span> Revenu
         </button>
-        <button class="sheet-option" disabled>
-          <span class="icon">🏃</span> Entraînement — bientôt
+        <button class="sheet-option" id="opt-entrainement">
+          <span class="icon">🏃</span> Entraînement
         </button>
       </div>
     </div>
@@ -56,6 +56,24 @@ function injectAddMenu() {
     }
   });
 
+  document.getElementById('opt-revenu').addEventListener('click', () => {
+    overlay.classList.remove('open');
+    if (typeof openMokaRevenueModal === 'function') {
+      openMokaRevenueModal();
+    } else {
+      window.location.href = 'moka.html?new=revenu';
+    }
+  });
+
+  document.getElementById('opt-entrainement').addEventListener('click', () => {
+    overlay.classList.remove('open');
+    if (typeof openRunningModal === 'function') {
+      openRunningModal();
+    } else {
+      window.location.href = 'running.html?new=1';
+    }
+  });
+
   document.getElementById('opt-idee').addEventListener('click', async () => {
     overlay.classList.remove('open');
     const content = window.prompt("Capture rapide — qu'est-ce que tu veux noter ?");
@@ -82,6 +100,7 @@ function injectAddMenu() {
     setTimeout(() => {
       if (typeof openTaskModal === 'function') openTaskModal();
       else if (typeof openCoachingModal === 'function') openCoachingModal();
+      else if (typeof openRunningModal === 'function') openRunningModal();
     }, 150);
   }
 }
