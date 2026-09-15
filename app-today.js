@@ -135,6 +135,10 @@ async function loadPilotage() {
   document.getElementById('kpi-provision').textContent = formatEuro(kpis.provision);
   document.getElementById('kpi-a-encaisser-inline').textContent = formatEuro(kpis.aEncaisser);
 
+  document.getElementById('kpi-split-cours').textContent = formatEuro(sessionKpis.caRealise);
+  document.getElementById('kpi-split-tournois').textContent = formatEuro(tournamentKpis.caRealise);
+  document.getElementById('kpi-split-total').textContent = formatEuro(kpis.caRealise);
+
   await renderObjective(range, kpis);
   renderChart(range, sessions);
   renderActivity(kpis);

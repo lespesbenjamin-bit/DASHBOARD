@@ -55,6 +55,10 @@ async function loadAll() {
   document.getElementById('kpi-provision').textContent = formatEuroB(kpis.provision);
   document.getElementById('kpi-heures').textContent = `${Math.round(kpis.heures * 10) / 10}h`;
 
+  document.getElementById('kpi-split-cours').textContent = formatEuroB(sessionKpis.caRealise);
+  document.getElementById('kpi-split-tournois').textContent = formatEuroB(tournamentKpis.caRealise);
+  document.getElementById('kpi-split-total').textContent = formatEuroB(kpis.caRealise);
+
   document.getElementById('pay-realise').textContent = formatEuroB(kpis.caRealise);
   const encaisse = kpis.caRealise - kpis.aEncaisser;
   document.getElementById('pay-encaisse').textContent = formatEuroB(encaisse);
