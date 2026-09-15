@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Business — Cockpit</title>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="greeting">
+        <h1>💰 Business</h1>
+        <div class="date" id="period-sub"></div>
+      </div>
+      <a href="index.html" class="logout-link">← Aujourd'hui</a>
+    </div>
+
+    <!-- SÉLECTEUR DE PÉRIODE -->
+    <div class="pilot-card">
+      <div class="pilot-header">
+        <div class="pilot-title">🎾 Coaching Padel</div>
+        <div class="segmented" id="period-segmented">
+          <button data-period="jour">Jour</button>
+          <button data-period="semaine" class="active">Semaine</button>
+          <button data-period="mois">Mois</button>
+        </div>
+      </div>
+
+      <div class="period-nav">
+        <button id="period-prev">←</button>
+        <span class="period-label" id="period-label">—</span>
+        <button id="period-next">→</button>
+      </div>
+
+      <div class="kpi-hero-grid">
+        <div class="kpi-hero accent">
+          <div class="kpi-hero-label">CA réalisé</div>
+          <div class="kpi-hero-num" id="kpi-ca-realise">–</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="kpi-hero-label">CA planifié</div>
+          <div class="kpi-hero-num" id="kpi-ca-planifie">–</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="kpi-hero-label">Marge</div>
+          <div class="kpi-hero-num" id="kpi-marge">–</div>
+        </div>
+        <div class="kpi-hero">
+          <div class="kpi-hero-label">Net estimé</div>
+          <div class="kpi-hero-num" id="kpi-net">–</div>
+        </div>
+      </div>
+
+      <div class="kpi-secondary-row">
+        <span>Redevance : <b id="kpi-redevance">–</b></span>
+        <span>Provision : <b id="kpi-provision">–</b></span>
+        <span>Heures : <b id="kpi-heures">–</b></span>
+      </div>
+
+      <div class="chart-wrap"><canvas id="ca-chart"></canvas></div>
+    </div>
+
+    <!-- COMPARAISON 4 DERNIÈRES SEMAINES -->
+    <div class="card">
+      <p class="card-title">4 DERNIÈRES SEMAINES — CA RÉALISÉ</p>
+      <div class="weeks-compare" id="weeks-compare"></div>
+    </div>
+
+    <!-- PAIEMENTS -->
+    <div class="card">
+      <p class="card-title">PAIEMENTS (période sélectionnée)</p>
+      <div class="payment-summary">
+        <div class="p-item"><div class="p-num" id="pay-realise">–</div><div class="p-label">CA réalisé</div></div>
+        <div class="p-item"><div class="p-num" id="pay-encaisse">–</div><div class="p-label">Déjà encaissé</div></div>
+        <div class="p-item"><div class="p-num" id="pay-a-encaisser">–</div><div class="p-label">À encaisser</div></div>
+      </div>
+    </div>
+
+    <!-- PIPELINE -->
+    <div class="card">
+      <p class="card-title">COURS DE LA PÉRIODE</p>
+      <div class="pipeline-grid">
+        <div class="pipeline-block realise">
+          <div class="p-label">Réalisés</div>
+          <div class="p-count" id="pipe-realise-count">–</div>
+          <div class="p-amount" id="pipe-realise-amount">–</div>
+        </div>
+        <div class="pipeline-block prevu">
+          <div class="p-label">Prévus</div>
+          <div class="p-count" id="pipe-prevu-count">–</div>
+          <div class="p-amount" id="pipe-prevu-amount">–</div>
+        </div>
+        <div class="pipeline-block annule">
+          <div class="p-label">Annulés</div>
+          <div class="p-count" id="pipe-annule-count">–</div>
+          <div class="p-amount" id="pipe-annule-amount">–</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ☕ MOKA STUDIO -->
+    <div class="card">
+      <p class="card-title">☕ MOKA STUDIO</p>
+      <div class="coming-soon">Module Moka Studio — bientôt disponible.<br/>Ce bloc affichera MRR, clients actifs et CA du mois.</div>
+    </div>
+
+    <!-- TOTAL ENTREPRENEURIAL -->
+    <div class="card">
+      <p class="card-title">TOTAL ENTREPRENEURIAL (Coaching + Moka)</p>
+      <div class="kpi-secondary-row" style="border-top:none;padding-top:0;">
+        <span>CA réalisé : <b id="total-ca">–</b></span>
+        <span>Net estimé : <b id="total-net">–</b></span>
+      </div>
+      <p class="empty" style="margin-top:8px;">Complet une fois Moka Studio branché.</p>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><span class="icon">🏠</span><span>Aujourd'hui</span></a>
+    <a href="#" class="nav-item"><span class="icon">📅</span><span>Semaine</span></a>
+    <a href="#" class="nav-add" id="nav-add">+</a>
+    <a href="business.html" class="nav-item active"><span class="icon">💰</span><span>Business</span></a>
+    <a href="tasks.html" class="nav-item"><span class="icon">☰</span><span>Plus</span></a>
+  </nav>
+
+  <script src="supabase-config.js"></script>
+  <script src="auth.js"></script>
+  <script src="coaching-engine.js"></script>
+  <script src="business-data.js"></script>
+  <script src="business.js"></script>
+  <script src="add-menu.js"></script>
+</body>
+</html>

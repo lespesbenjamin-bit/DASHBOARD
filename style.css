@@ -716,7 +716,54 @@ button { font-family: inherit; }
 .list-modal-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
 .list-modal-row:last-child { border-bottom: none; }
 
-/* ---------- Bottom nav (mobile) ---------- */
+/* ---------- Comparaison de semaines (barres) ---------- */
+.weeks-compare {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 140px;
+  margin-top: 14px;
+  padding-top: 10px;
+}
+
+.week-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.week-bar {
+  width: 100%;
+  max-width: 34px;
+  background: var(--padel);
+  border-radius: 6px 6px 0 0;
+  transition: height 400ms ease;
+}
+
+.week-bar-label { font-size: 10px; color: var(--ink-faint); margin-top: 6px; }
+.week-bar-value { font-size: 10px; font-weight: 700; color: var(--ink-soft); margin-bottom: 4px; }
+
+/* ---------- Paiements ---------- */
+.payment-summary {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.payment-summary .p-item { text-align: center; flex: 1; }
+.payment-summary .p-num { font-size: 20px; font-weight: 800; }
+.payment-summary .p-label { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+
+/* ---------- Placeholder module à venir ---------- */
+.coming-soon {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--ink-faint);
+  font-size: 13px;
+}
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
   background: var(--surface);
