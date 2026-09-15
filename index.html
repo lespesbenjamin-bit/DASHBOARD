@@ -4,8 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Aujourd'hui — Cockpit</title>
+  <script src="theme.js"></script>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
 <body>
   <div class="app">
@@ -14,68 +16,163 @@
         <h1 id="greeting-text">Bonjour 👋</h1>
         <div class="date" id="today-date"></div>
       </div>
-      <a href="#" class="logout-link" id="logout-btn">Déconnexion</a>
+      <div class="header-actions">
+        <div class="theme-toggle">
+          <button data-mode="light" title="Clair">☀️</button>
+          <button data-mode="dark" title="Sombre">🌙</button>
+          <button data-mode="system" title="Système">⚙️</button>
+        </div>
+        <a href="#" class="logout-link" id="logout-btn">Déconnexion</a>
+      </div>
+    </div>
+
+    <!-- ACTIONS RAPIDES -->
+    <div class="quick-actions">
+      <div class="quick-action-chip" id="qa-tache">📋 Tâche</div>
+      <div class="quick-action-chip" id="qa-cours">🎾 Cours</div>
+      <div class="quick-action-chip" id="qa-entrainement">🏃 Entraînement</div>
+    </div>
+
+    <!-- 🎾 PILOTAGE COACHING -->
+    <div class="pilot-card">
+      <div class="pilot-header">
+        <div class="pilot-title">🎾 Pilotage Coaching</div>
+        <div class="segmented" id="period-segmented">
+          <button data-period="jour">Jour</button>
+          <button data-period="semaine" class="active">Semaine</button>
+          <button data-period="mois">Mois</button>
+        </div>
+      </div>
+
+      <div class="period-nav">
+        <button id="period-prev">←</button>
+        <span class="period-label" id="period-label">—</span>
+        <button id="period-next">→</button>
+      </div>
+
+      <div class="kpi-hero-grid">
+        <div class="kpi-hero accent">
+          <div class="kpi-hero-label">CA réalisé</div>
+          <div class="kpi-hero-num" id="kpi-ca-realise">–</div>
+          <div class="kpi-hero-delta" id="kpi-ca-realise-delta"></div>
+        </div>
+        <div class="kpi-hero">
+          <div class="kpi-hero-label">CA planifié</div>
+          <div class="kpi-hero-num" id="kpi-ca-planifie">–</div>
+          <div class="kpi-hero-delta" id="kpi-ca-planifie-delta"></div>
+        </div>
+        <div class="kpi-hero">
+          <div class="kpi-hero-label">Net estimé</div>
+          <div class="kpi-hero-num" id="kpi-net">–</div>
+          <div class="kpi-hero-delta" id="kpi-net-delta"></div>
+        </div>
+        <div class="kpi-hero">
+          <div class="kpi-hero-label">Heures</div>
+          <div class="kpi-hero-num" id="kpi-heures">–</div>
+          <div class="kpi-hero-delta" id="kpi-heures-delta"></div>
+        </div>
+      </div>
+
+      <div class="kpi-secondary-row">
+        <span>Redevance : <b id="kpi-redevance">–</b></span>
+        <span>Provision : <b id="kpi-provision">–</b></span>
+        <span>À encaisser : <b id="kpi-a-encaisser-inline">–</b></span>
+      </div>
+
+      <div class="objective-card" id="objective-card" style="display:none;">
+        <div class="objective-top">
+          <span class="amounts"><span id="obj-current">0€</span> / <span id="obj-target">0€</span></span>
+          <span class="pct" id="obj-pct">0%</span>
+        </div>
+        <div class="objective-bar"><div class="objective-bar-fill" id="obj-bar-fill" style="width:0%"></div></div>
+      </div>
+
+      <div class="chart-wrap"><canvas id="ca-chart"></canvas></div>
+
+      <p class="card-title" style="margin-top:20px;">ACTIVITÉ</p>
+      <div class="activity-row"><span class="label">Cours réalisés</span><span class="value" id="act-realises">–</span></div>
+      <div class="activity-row"><span class="label">Cours restants (prévus)</span><span class="value" id="act-restants">–</span></div>
+      <div class="activity-row"><span class="label">Cours annulés</span><span class="value" id="act-annules">–</span></div>
+      <div class="activity-row"><span class="label">Heures réalisées / planifiées</span><span class="value" id="act-heures">–</span></div>
+
+      <div class="type-breakdown">
+        <div class="type-block"><div class="t-label">Individuels</div><div class="t-num" id="type-individuels-num">–</div><div class="t-sub" id="type-individuels-sub">–</div></div>
+        <div class="type-block"><div class="t-label">Duos</div><div class="t-num" id="type-duos-num">–</div><div class="t-sub" id="type-duos-sub">–</div></div>
+        <div class="type-block"><div class="t-label">Collectifs</div><div class="t-num" id="type-collectifs-num">–</div><div class="t-sub" id="type-collectifs-sub">–</div></div>
+      </div>
+
+      <p class="card-title" style="margin-top:20px;">COURS DE LA PÉRIODE</p>
+      <div class="pipeline-grid">
+        <div class="pipeline-block realise" data-pipeline="realise">
+          <div class="p-label">Réalisés</div>
+          <div class="p-count" id="pipe-realise-count">–</div>
+          <div class="p-amount" id="pipe-realise-amount">–</div>
+        </div>
+        <div class="pipeline-block prevu" data-pipeline="prevu">
+          <div class="p-label">Prévus</div>
+          <div class="p-count" id="pipe-prevu-count">–</div>
+          <div class="p-amount" id="pipe-prevu-amount">–</div>
+        </div>
+        <div class="pipeline-block annule" data-pipeline="annule">
+          <div class="p-label">Annulés</div>
+          <div class="p-count" id="pipe-annule-count">–</div>
+          <div class="p-amount" id="pipe-annule-amount">–</div>
+        </div>
+      </div>
+
+      <div class="alert-card" id="alert-encaisser">
+        <div>
+          <div class="a-label">À encaisser</div>
+          <div class="a-num" id="alert-num">0€</div>
+          <div class="a-sub" id="alert-sub">0 cours</div>
+        </div>
+        <div class="a-chevron">›</div>
+      </div>
     </div>
 
     <!-- FOCUS DU JOUR -->
     <div class="card">
       <p class="card-title">🎯 FOCUS DU JOUR</p>
-      <div id="focus-list">
-        <p class="empty">Chargement...</p>
-      </div>
+      <div id="focus-list"><p class="empty">Chargement...</p></div>
     </div>
 
-    <!-- KPI DU JOUR -->
+    <!-- PLANNING DU JOUR -->
     <div class="card">
-      <p class="card-title">AUJOURD'HUI</p>
-      <div class="kpi-grid">
-        <div class="kpi">
-          <div class="num" id="kpi-tasks">–</div>
-          <div class="label">Tâches restantes</div>
-        </div>
-        <div class="kpi">
-          <div class="num" id="kpi-sessions">–</div>
-          <div class="label">Cours aujourd'hui</div>
-        </div>
-        <div class="kpi">
-          <div class="num" id="kpi-ca-prevu">–</div>
-          <div class="label">CA prévu</div>
-        </div>
-        <div class="kpi">
-          <div class="num" id="kpi-ca-realise">–</div>
-          <div class="label">CA réalisé</div>
-        </div>
-      </div>
-      <div class="progress-bar">
-        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
-      </div>
+      <p class="card-title">📅 AUJOURD'HUI</p>
+      <div id="today-plan"><p class="empty">Chargement...</p></div>
     </div>
 
-    <!-- LES 4 UNIVERS -->
-    <div class="universe-grid" id="universe-grid">
-      <!-- rempli en JS -->
+    <!-- MES UNIVERS (hors Coaching, déjà piloté plus haut) -->
+    <p class="card-title" style="margin: 18px 4px 0;">MES AUTRES UNIVERS</p>
+    <div class="universe-grid" id="universe-grid"></div>
+
+    <!-- CAPTURE RAPIDE -->
+    <div class="card capture-card" id="capture-card">💡 Capture rapide — noter une idée</div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item active"><span class="icon">🏠</span><span>Aujourd'hui</span></a>
+    <a href="#" class="nav-item"><span class="icon">📅</span><span>Semaine</span></a>
+    <a href="#" class="nav-add" id="nav-add">+</a>
+    <a href="#" class="nav-item"><span class="icon">💰</span><span>Business</span></a>
+    <a href="tasks.html" class="nav-item"><span class="icon">☰</span><span>Plus</span></a>
+  </nav>
+
+  <!-- MODALE LISTE (pipeline / à encaisser) -->
+  <div class="modal-overlay" id="list-modal-overlay">
+    <div class="modal">
+      <h2 id="list-modal-title">Détail</h2>
+      <div id="list-modal-body"></div>
+      <div class="modal-buttons">
+        <button type="button" class="btn-secondary" id="close-list-modal">Fermer</button>
+      </div>
     </div>
   </div>
 
-  <!-- NAV MOBILE -->
-  <nav class="bottom-nav">
-    <a href="index.html" class="nav-item active">
-      <span class="icon">🏠</span><span>Aujourd'hui</span>
-    </a>
-    <a href="#" class="nav-item">
-      <span class="icon">📅</span><span>Semaine</span>
-    </a>
-    <a href="#" class="nav-add">+</a>
-    <a href="#" class="nav-item">
-      <span class="icon">💰</span><span>Business</span>
-    </a>
-    <a href="tasks.html" class="nav-item">
-      <span class="icon">☰</span><span>Plus</span>
-    </a>
-  </nav>
-
   <script src="supabase-config.js"></script>
   <script src="auth.js"></script>
+  <script src="coaching-engine.js"></script>
+  <script src="business-data.js"></script>
   <script src="app-today.js"></script>
   <script src="add-menu.js"></script>
 </body>

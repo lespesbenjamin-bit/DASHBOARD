@@ -1,16 +1,14 @@
 // ============================================
-// DASHBOARD AUJOURD'HUI
+// DASHBOARD AUJOURD'HUI — avec Pilotage Coaching
 // ============================================
 
-const UNIVERSES = [
-  { key: 'padel', label: 'Coaching Padel', icon: '🎾' },
-  { key: 'thalgo', label: 'Thalgo', icon: '💼' },
-  { key: 'moka', label: 'Moka Studio', icon: '☕' },
-  { key: 'running', label: 'Course à pied', icon: '🏃' },
-];
+let currentUser = null;
+let categoryById = {};
+let currentPeriodType = 'semaine';
+let currentOffset = 0;
+let chartInstance = null;
 
-// Renvoie la date du jour au format YYYY-MM-DD (attendu par Postgres `date`)
-function todayISO() {
+function todayISOLocal() {
   const d = new Date();
   const offset = d.getTimezoneOffset();
   const local = new Date(d.getTime() - offset * 60000);
@@ -23,48 +21,306 @@ function formatDateFR(isoDate) {
 }
 
 function formatEuro(amount) {
-  return (amount || 0).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '€';
+  return Math.round(amount || 0).toLocaleString('fr-FR') + '€';
+}
+
+function escapeHTML(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 async function init() {
-  const user = await requireAuth();
-  if (!user) return; // requireAuth redirige déjà vers login.html
+  currentUser = await requireAuth();
+  if (!currentUser) return;
 
-  document.getElementById('logout-btn').addEventListener('click', (e) => {
-    e.preventDefault();
-    logout();
-  });
+  initThemeToggle();
+
+  document.getElementById('logout-btn').addEventListener('click', (e) => { e.preventDefault(); logout(); });
 
   document.getElementById('greeting-text').textContent = 'Bonjour Benjamin 👋';
-  const today = todayISO();
-  document.getElementById('today-date').textContent = formatDateFR(today);
+  document.getElementById('today-date').textContent = formatDateFR(todayISOLocal());
 
-  // Catégories : on a besoin de la table pour relier category_id -> key ('padel', etc.)
-  const { data: categories } = await supabaseClient
-    .from('categories')
-    .select('id, key, label');
+  document.getElementById('qa-tache').addEventListener('click', () => window.location.href = 'tasks.html?new=1');
+  document.getElementById('qa-cours').addEventListener('click', () => window.location.href = 'coaching.html?new=1');
+  document.getElementById('qa-entrainement').addEventListener('click', () => alert('Module Running — bientôt disponible.'));
+  document.getElementById('capture-card').addEventListener('click', quickCapture);
 
-  const categoryById = {};
-  (categories || []).forEach(c => { categoryById[c.id] = c; });
+  document.querySelectorAll('#period-segmented button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#period-segmented button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentPeriodType = btn.dataset.period;
+      currentOffset = 0;
+      loadPilotage();
+    });
+  });
 
-  // Tâches du jour
+  document.getElementById('period-prev').addEventListener('click', () => { currentOffset -= 1; loadPilotage(); });
+  document.getElementById('period-next').addEventListener('click', () => { currentOffset += 1; loadPilotage(); });
+
+  document.getElementById('close-list-modal').addEventListener('click', () => {
+    document.getElementById('list-modal-overlay').classList.remove('open');
+  });
+
+  document.querySelectorAll('.pipeline-block').forEach(block => {
+    block.addEventListener('click', () => showPipelineDetail(block.dataset.pipeline));
+  });
+
+  document.getElementById('alert-encaisser').addEventListener('click', showEncaisserDetail);
+
+  const { data: cats } = await supabaseClient.from('categories').select('id, key, label');
+  (cats || []).forEach(c => { categoryById[c.id] = c; });
+
+  await loadPilotage();
+  await loadFocusAndPlan();
+  await loadUniverses();
+}
+
+async function quickCapture() {
+  const content = window.prompt("Capture rapide — qu'est-ce que tu veux noter ?");
+  if (!content || !content.trim()) return;
+  await supabaseClient.from('inbox_items').insert({ user_id: currentUser.id, content: content.trim() });
+  alert('Ajouté à ton Inbox 💡');
+}
+
+// ============================================
+// PILOTAGE COACHING
+// ============================================
+
+let lastKPIs = null; // gardé en mémoire pour les clics pipeline / à encaisser
+
+async function loadPilotage() {
+  const range = getPeriodRange(currentPeriodType, currentOffset);
+  document.getElementById('period-label').textContent = range.label;
+
+  const [sessions, prevSessions] = await Promise.all([
+    fetchSessionsInRange(range.start, range.end),
+    fetchSessionsInRange(range.prevStart, range.prevEnd),
+  ]);
+
+  const kpis = computeCoachingKPIs(sessions);
+  const prevKpis = computeCoachingKPIs(prevSessions);
+  lastKPIs = kpis;
+
+  renderKPI('kpi-ca-realise', kpis.caRealise, prevKpis.caRealise, range.isCurrent);
+  renderKPI('kpi-ca-planifie', kpis.caPlanifie, prevKpis.caPlanifie, range.isCurrent);
+  renderKPI('kpi-net', kpis.netEstime, prevKpis.netEstime, range.isCurrent);
+  renderKPIHeures(kpis.heures, prevKpis.heures, range.isCurrent);
+
+  document.getElementById('kpi-redevance').textContent = formatEuro(kpis.redevance);
+  document.getElementById('kpi-provision').textContent = formatEuro(kpis.provision);
+  document.getElementById('kpi-a-encaisser-inline').textContent = formatEuro(kpis.aEncaisser);
+
+  await renderObjective(range, kpis);
+  renderChart(range, sessions);
+  renderActivity(kpis);
+  renderPipeline(kpis);
+  renderAlert(kpis);
+}
+
+function renderKPI(prefix, current, previous, isCurrent) {
+  document.getElementById(prefix).textContent = formatEuro(current);
+  const delta = computeDelta(current, previous);
+  const el = document.getElementById(prefix + '-delta');
+  renderDeltaEl(el, delta, isCurrent);
+}
+
+function renderKPIHeures(current, previous, isCurrent) {
+  const h = Math.floor(current);
+  const m = Math.round((current - h) * 60);
+  document.getElementById('kpi-heures').textContent = `${h}h${m > 0 ? m.toString().padStart(2, '0') : ''}`;
+  const delta = computeDelta(current, previous);
+  renderDeltaEl(document.getElementById('kpi-heures-delta'), delta, isCurrent);
+}
+
+function renderDeltaEl(el, delta, isCurrent) {
+  if (delta.direction === 'flat') { el.innerHTML = ''; return; }
+  const arrow = delta.direction === 'up' ? '↑' : '↓';
+  const vsLabel = isCurrent ? 'vs période équiv. précédente' : 'vs période précédente';
+  el.className = `kpi-hero-delta ${delta.direction}`;
+  el.innerHTML = `${arrow} ${delta.pct}% <span class="vs">${vsLabel}</span>`;
+}
+
+async function renderObjective(range, kpis) {
+  const card = document.getElementById('objective-card');
+  if (range.type === 'jour') {
+    const objectif = await fetchObjective(currentUser.id, range);
+    if (!objectif) { card.style.display = 'none'; return; }
+    showObjective(kpis.caPlanifie, objectif);
+    return;
+  }
+  const objectif = await fetchObjective(currentUser.id, range);
+  if (!objectif) { card.style.display = 'none'; return; }
+  showObjective(kpis.caPlanifie, objectif);
+}
+
+function showObjective(current, target) {
+  const card = document.getElementById('objective-card');
+  card.style.display = 'block';
+  const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+  document.getElementById('obj-current').textContent = formatEuro(current);
+  document.getElementById('obj-target').textContent = formatEuro(target);
+  document.getElementById('obj-pct').textContent = pct + '%';
+  document.getElementById('obj-bar-fill').style.width = pct + '%';
+}
+
+function renderChart(range, sessions) {
+  const series = buildChartSeries(range, sessions);
+  const ctx = document.getElementById('ca-chart').getContext('2d');
+
+  const styles = getComputedStyle(document.documentElement);
+  const padelColor = styles.getPropertyValue('--padel').trim();
+  const accentColor = styles.getPropertyValue('--accent').trim();
+  const inkFaint = styles.getPropertyValue('--ink-faint').trim();
+  const border = styles.getPropertyValue('--border').trim();
+
+  if (chartInstance) chartInstance.destroy();
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: series.labels,
+      datasets: [
+        {
+          label: 'CA réalisé',
+          data: series.realiseCumule,
+          borderColor: padelColor,
+          backgroundColor: padelColor + '26',
+          fill: true,
+          tension: 0.35,
+          pointRadius: 2,
+        },
+        {
+          label: 'CA planifié',
+          data: series.planifieCumule,
+          borderColor: accentColor,
+          borderDash: [5, 4],
+          backgroundColor: 'transparent',
+          fill: false,
+          tension: 0.35,
+          pointRadius: 2,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: true, labels: { color: inkFaint, boxWidth: 10, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            afterBody: (items) => {
+              const idx = items[0]?.dataIndex;
+              const d = series.details[idx];
+              if (!d) return '';
+              return [`${d.nbCours} cours · ${d.heures}h`];
+            },
+          },
+        },
+      },
+      scales: {
+        x: { grid: { color: border }, ticks: { color: inkFaint, font: { size: 11 } } },
+        y: { grid: { color: border }, ticks: { color: inkFaint, font: { size: 11 }, callback: v => v + '€' } },
+      },
+    },
+  });
+}
+
+function renderActivity(kpis) {
+  document.getElementById('act-realises').textContent = kpis.pipeline.realise.count;
+  document.getElementById('act-restants').textContent = kpis.pipeline.prevu.count;
+  document.getElementById('act-annules').textContent = kpis.pipeline.annule.count;
+  document.getElementById('act-heures').textContent =
+    `${Math.round(kpis.heuresRealisees * 10) / 10}h / ${Math.round(kpis.heuresPlanifiees * 10) / 10}h`;
+
+  const labels = { individuels: 'Individuels', duos: 'Duos', collectifs: 'Collectifs' };
+  Object.entries(kpis.typeBreakdown).forEach(([key, val]) => {
+    document.getElementById(`type-${key}-num`).textContent = `${val.count} cours`;
+    document.getElementById(`type-${key}-sub`).textContent = `${formatEuro(val.ca)} · ${Math.round(val.heures * 10) / 10}h`;
+  });
+}
+
+function renderPipeline(kpis) {
+  document.getElementById('pipe-realise-count').textContent = kpis.pipeline.realise.count;
+  document.getElementById('pipe-realise-amount').textContent = formatEuro(kpis.pipeline.realise.ca);
+  document.getElementById('pipe-prevu-count').textContent = kpis.pipeline.prevu.count;
+  document.getElementById('pipe-prevu-amount').textContent = formatEuro(kpis.pipeline.prevu.ca);
+  document.getElementById('pipe-annule-count').textContent = kpis.pipeline.annule.count;
+  document.getElementById('pipe-annule-amount').textContent = formatEuro(kpis.pipeline.annule.ca) + ' perdus';
+}
+
+function renderAlert(kpis) {
+  document.getElementById('alert-num').textContent = formatEuro(kpis.aEncaisser);
+  document.getElementById('alert-sub').textContent = `${kpis.aEncaisserSessions.length} cours`;
+}
+
+function showPipelineDetail(key) {
+  if (!lastKPIs) return;
+  const map = { realise: lastKPIs.sessionsRealise, prevu: lastKPIs.sessionsPrevu, annule: lastKPIs.sessionsAnnule };
+  const titles = { realise: 'Cours réalisés', prevu: 'Cours prévus', annule: 'Cours annulés' };
+  const sessions = map[key];
+
+  const body = document.getElementById('list-modal-body');
+  if (sessions.length === 0) {
+    body.innerHTML = '<p class="empty">Aucun cours ici.</p>';
+  } else {
+    body.innerHTML = sessions.map(s => `
+      <div class="list-modal-row">
+        <span>${s.date} · ${s.time?.slice(0, 5)} · ${TYPE_LABELS_FR[s.type] || s.type}</span>
+        <span><b>${formatEuro(s.ca_brut)}</b></span>
+      </div>
+    `).join('');
+  }
+  document.getElementById('list-modal-title').textContent = titles[key];
+  document.getElementById('list-modal-overlay').classList.add('open');
+}
+
+function showEncaisserDetail() {
+  if (!lastKPIs) return;
+  const sessions = lastKPIs.aEncaisserSessions;
+  const body = document.getElementById('list-modal-body');
+
+  if (sessions.length === 0) {
+    body.innerHTML = '<p class="empty">Rien à encaisser sur cette période 🎉</p>';
+  } else {
+    body.innerHTML = sessions.map(s => `
+      <div class="list-modal-row" data-session-id="${s.id}">
+        <span>${s.date} · ${s.time?.slice(0, 5)} · ${TYPE_LABELS_FR[s.type] || s.type} — <b>${formatEuro(s.ca_brut)}</b></span>
+        <button class="icon-btn" data-mark-paid="${s.id}" title="Marquer payé">✓</button>
+      </div>
+    `).join('');
+
+    body.querySelectorAll('[data-mark-paid]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await supabaseClient.from('coaching_sessions').update({ payment_status: 'paye' }).eq('id', btn.dataset.markPaid);
+        document.getElementById('list-modal-overlay').classList.remove('open');
+        await loadPilotage();
+      });
+    });
+  }
+  document.getElementById('list-modal-title').textContent = 'À encaisser';
+  document.getElementById('list-modal-overlay').classList.add('open');
+}
+
+// ============================================
+// FOCUS DU JOUR + PLANNING DU JOUR
+// ============================================
+
+async function loadFocusAndPlan() {
+  const today = todayISOLocal();
+
   const { data: tasks } = await supabaseClient
-    .from('tasks')
-    .select('id, title, category_id, status, is_focus')
-    .eq('date', today)
-    .neq('status', 'annule');
+    .from('tasks').select('id, title, category_id, status, is_focus, time')
+    .eq('date', today).neq('status', 'annule');
 
-  // Cours du jour
   const { data: sessions } = await supabaseClient
-    .from('coaching_sessions')
-    .select('id, time, status, ca_brut, type')
-    .eq('date', today)
-    .neq('status', 'annule')
-    .order('time', { ascending: true });
+    .from('coaching_sessions').select('id, time, type, nb_players, status')
+    .eq('date', today).neq('status', 'annule').order('time', { ascending: true });
 
   renderFocus((tasks || []).filter(t => t.is_focus));
-  renderKPIs(tasks || [], sessions || []);
-  renderUniverses(tasks || [], sessions || [], categoryById);
+  renderTodayPlan(tasks || [], sessions || []);
 }
 
 function renderFocus(focusTasks) {
@@ -83,55 +339,60 @@ function renderFocus(focusTasks) {
   el.querySelectorAll('.focus-item').forEach(item => {
     item.addEventListener('click', async () => {
       const id = item.dataset.id;
-      const currentlyDone = item.dataset.status === 'termine';
-      const newStatus = currentlyDone ? 'a_faire' : 'termine';
-      const { error } = await supabaseClient
-        .from('tasks')
-        .update({ status: newStatus, completed_at: newStatus === 'termine' ? new Date().toISOString() : null })
-        .eq('id', id);
-      if (!error) init(); // on recharge tout simplement pour rester cohérent
+      const newStatus = item.dataset.status === 'termine' ? 'a_faire' : 'termine';
+      await supabaseClient.from('tasks').update({
+        status: newStatus, completed_at: newStatus === 'termine' ? new Date().toISOString() : null,
+      }).eq('id', id);
+      loadFocusAndPlan();
     });
   });
 }
 
-function renderKPIs(tasks, sessions) {
-  const remaining = tasks.filter(t => t.status !== 'termine').length;
-  const done = tasks.filter(t => t.status === 'termine').length;
-  const total = tasks.length;
+function renderTodayPlan(tasks, sessions) {
+  const el = document.getElementById('today-plan');
+  const items = [
+    ...sessions.map(s => ({
+      sortKey: s.time || '99:99',
+      html: `<div class="task-row">
+        <span class="badge realise" style="background:var(--padel-soft);color:var(--padel);">${s.time?.slice(0,5)}</span>
+        <div class="task-body"><div class="task-title">Cours ${TYPE_LABELS_FR[s.type] || s.type} · ${s.nb_players} joueur${s.nb_players > 1 ? 's' : ''}</div></div>
+      </div>`,
+    })),
+    ...tasks.map(t => ({
+      sortKey: t.time || '99:99',
+      html: `<div class="task-row">
+        <div class="checkbox ${t.status === 'termine' ? 'checked' : ''}">${t.status === 'termine' ? '✓' : ''}</div>
+        <div class="task-body"><div class="task-title" style="${t.status === 'termine' ? 'text-decoration:line-through;color:var(--ink-faint);' : ''}">${escapeHTML(t.title)}</div></div>
+      </div>`,
+    })),
+  ].sort((a, b) => a.sortKey.localeCompare(b.sortKey));
 
-  const caPrevu = sessions.filter(s => s.status === 'prevu').reduce((sum, s) => sum + Number(s.ca_brut || 0), 0);
-  const caRealise = sessions.filter(s => s.status === 'realise').reduce((sum, s) => sum + Number(s.ca_brut || 0), 0);
-
-  document.getElementById('kpi-tasks').textContent = remaining;
-  document.getElementById('kpi-sessions').textContent = sessions.length;
-  document.getElementById('kpi-ca-prevu').textContent = formatEuro(caPrevu);
-  document.getElementById('kpi-ca-realise').textContent = formatEuro(caRealise);
-
-  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-  document.getElementById('progress-fill').style.width = pct + '%';
+  el.innerHTML = items.length > 0 ? items.map(i => i.html).join('') : '<p class="empty">Rien de prévu aujourd\'hui.</p>';
 }
 
-function renderUniverses(tasks, sessions, categoryById) {
-  const grid = document.getElementById('universe-grid');
+// ============================================
+// AUTRES UNIVERS (Thalgo / Moka / Running)
+// ============================================
 
-  grid.innerHTML = UNIVERSES.map(u => {
-    const universeTasks = tasks.filter(t => categoryById[t.category_id]?.key === u.key);
+async function loadUniverses() {
+  const today = todayISOLocal();
+  const { data: tasks } = await supabaseClient
+    .from('tasks').select('category_id, status').neq('status', 'annule').eq('date', today);
+
+  const OTHER_UNIVERSES = [
+    { key: 'thalgo', label: 'Thalgo', icon: '💼' },
+    { key: 'moka', label: 'Moka Studio', icon: '☕' },
+    { key: 'running', label: 'Course à pied', icon: '🏃' },
+  ];
+
+  const grid = document.getElementById('universe-grid');
+  grid.innerHTML = OTHER_UNIVERSES.map(u => {
+    const catId = Object.keys(categoryById).find(id => categoryById[id].key === u.key);
+    const universeTasks = (tasks || []).filter(t => t.category_id === catId);
     const remaining = universeTasks.filter(t => t.status !== 'termine');
     const total = universeTasks.length;
-    const doneCount = total - remaining.length;
-    const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
-
-    const nextTask = remaining[0];
-    const nextSession = u.key === 'padel' && sessions.length > 0 ? sessions[0] : null;
-
-    let metaLine = '';
-    if (nextSession) {
-      metaLine = `Prochain cours ${nextSession.time?.slice(0, 5)}`;
-    } else if (nextTask) {
-      metaLine = escapeHTML(nextTask.title);
-    } else {
-      metaLine = 'Rien de prévu';
-    }
+    const done = total - remaining.length;
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
     return `
       <div class="universe-card ${u.key}">
@@ -139,21 +400,11 @@ function renderUniverses(tasks, sessions, categoryById) {
           <span>${u.icon} ${u.label}</span>
           <span>${remaining.length} tâche${remaining.length > 1 ? 's' : ''}</span>
         </div>
-        <div class="universe-meta">${metaLine}</div>
-        ${total > 0 ? `
-          <div class="universe-bar">
-            <div class="universe-bar-fill" style="width: ${pct}%"></div>
-          </div>
-        ` : ''}
+        <div class="universe-meta">${remaining[0] ? 'Tâche du jour en attente' : 'Rien de prévu'}</div>
+        ${total > 0 ? `<div class="universe-bar"><div class="universe-bar-fill" style="width:${pct}%"></div></div>` : ''}
       </div>
     `;
   }).join('');
-}
-
-function escapeHTML(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
 }
 
 init();
