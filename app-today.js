@@ -72,6 +72,8 @@ async function init() {
   const { data: cats } = await supabaseClient.from('categories').select('id, key, label');
   (cats || []).forEach(c => { categoryById[c.id] = c; });
 
+  setupWM();
+  await loadWeekMonthTasks();
   await loadPilotage();
   await loadFocusAndPlan();
   await loadUniverses();
@@ -302,6 +304,75 @@ function showEncaisserDetail() {
   }
   document.getElementById('list-modal-title').textContent = 'À encaisser';
   document.getElementById('list-modal-overlay').classList.add('open');
+}
+
+// ============================================
+// TÂCHES À VENIR (SEMAINE / MOIS)
+// ============================================
+
+let wmRangeType = 'semaine';
+
+function setupWM() {
+  document.querySelectorAll('#wm-segmented button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#wm-segmented button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      wmRangeType = btn.dataset.range;
+      loadWeekMonthTasks();
+    });
+  });
+}
+
+async function loadWeekMonthTasks() {
+  const range = getPeriodRange(wmRangeType, 0);
+  const { data: tasks } = await supabaseClient
+    .from('tasks').select('id, title, category_id, status, date, priority')
+    .gte('date', range.start).lte('date', range.end)
+    .neq('status', 'annule').neq('status', 'termine')
+    .order('date', { ascending: true });
+
+  renderWMList(tasks || []);
+}
+
+function renderWMList(tasks) {
+  const el = document.getElementById('wm-list');
+  if (tasks.length === 0) {
+    el.innerHTML = '<p class="empty">Rien à venir sur cette période.</p>';
+    return;
+  }
+  el.innerHTML = tasks.map(t => {
+    const cat = categoryById[t.category_id];
+    return `
+      <div class="task-row" data-id="${t.id}">
+        <div class="checkbox" data-action="toggle"></div>
+        <div class="task-body">
+          <div class="task-title">${escapeHTML(t.title)}</div>
+          <div class="task-meta">
+            <span class="cat-badge ${cat?.key || ''}">${cat?.label || ''}</span>
+            <span class="priority-dot ${t.priority}"></span>
+            <span>${formatDateShortWM(t.date)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  el.querySelectorAll('.task-row').forEach(row => {
+    row.querySelector('[data-action="toggle"]').addEventListener('click', async () => {
+      await supabaseClient.from('tasks').update({
+        status: 'termine', completed_at: new Date().toISOString(),
+      }).eq('id', row.dataset.id);
+      await loadWeekMonthTasks();
+      await loadFocusAndPlan();
+    });
+  });
+}
+
+function formatDateShortWM(iso) {
+  const today = todayISOLocal();
+  if (iso === today) return "Aujourd'hui";
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 // ============================================
